@@ -1,0 +1,52 @@
+const fs = require('fs');
+const fetch = require('node-fetch');
+const { GoogleAuth } = require('google-auth-library');
+
+const PROJECT_ID = 'key-beacon-463806-s2';
+const REGION = 'us-central1';
+const MODEL = 'gemini-2.5-pro';
+
+async function main() {
+  const auth = new GoogleAuth({
+    keyFile: 'C:/Users/adhik/Desktop/Cluey 2.0/test/credentials_vertex.json',
+    scopes: 'https://www.googleapis.com/auth/cloud-platform',
+  });
+
+  const client = await auth.getClient();
+  const token = await client.getAccessToken();
+
+  const imageBytes = fs.readFileSync('C:/Users/adhik/Desktop/Cluey 2.0/test/test2.png').toString('base64');
+
+  const payload = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: "What's happening in this screenshot?",
+          },
+          {
+            inlineData: {
+              mimeType: "image/png",
+              data: imageBytes,
+            },
+          },
+        ],
+      },
+    ]
+  };
+
+  const res = await fetch(`https://${REGION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${REGION}/publishers/google/models/${MODEL}:generateContent`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token.token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await res.json();
+  console.log(JSON.stringify(result, null, 2));
+}
+
+main().catch(console.error);

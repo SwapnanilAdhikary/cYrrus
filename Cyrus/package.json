@@ -1,0 +1,27 @@
+{
+  "name": "cluey-2.0",
+  "version": "1.0.0",
+  "description": "MVP desktop assistant overlay like Cluely",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "electron",
+    "desktop",
+    "overlay",
+    "ai",
+    "cluely"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^36.5.0"
+  },
+  "dependencies": {
+    "@google-cloud/vision": "^5.2.0",
+    "google-auth-library": "^10.1.0",
+    "marked": "^15.0.12",
+    "node-fetch": "^2.7.0"
+  }
+}
