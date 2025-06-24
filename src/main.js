@@ -3,6 +3,7 @@ require('dotenv').config();
 const { app, BrowserWindow, globalShortcut, ipcMain, desktopCapturer } = require('electron');
 const path = require('path');
 const { askGemini } = require('./services/gemini');
+const { enableStealthMode, disableStealthMode, getStealthModeStatus } = require('./services/stealth-mode');
 const crypto = require('crypto');
 
 // Enable live reload for development
@@ -139,6 +140,21 @@ Ignore display glitches unless they block the task.
   // 📡 IPC from renderer (text prompt)
   ipcMain.handle('ask-gemini', async (event, prompt) => {
     return await askGemini(prompt);
+  });
+
+  // IPC handlers for stealth mode
+  ipcMain.handle('enable-stealth-mode', async () => {
+    enableStealthMode();
+    return getStealthModeStatus();
+  });
+
+  ipcMain.handle('disable-stealth-mode', async () => {
+    disableStealthMode();
+    return getStealthModeStatus();
+  });
+
+  ipcMain.handle('get-stealth-status', async () => {
+    return getStealthModeStatus();
   });
 
   app.on('activate', () => {

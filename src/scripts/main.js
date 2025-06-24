@@ -4,9 +4,11 @@ const input = document.getElementById('input');
 const askBtn = document.getElementById('ask-btn');
 const askText = document.getElementById('ask-text');
 const statusIndicator = document.querySelector('.status-indicator span');
+const stealthToggle = document.getElementById('stealth-toggle');
 
 // Application State
 let isProcessing = false;
+let isStealthMode = false;
 
 // Development mode helpers
 const isDevelopment = window.location.protocol === 'file:' && window.location.href.includes('src/');
@@ -74,6 +76,14 @@ function setupEventListeners() {
       handleAsk();
     }
   });
+
+  // Stealth mode toggle
+  if (stealthToggle) {
+    stealthToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleStealthMode();
+    });
+  }
 
   // Auto-focus input when overlay is shown
   window.addEventListener('focus', () => {
@@ -182,6 +192,77 @@ function handleStealthResponse({ prompt, response }) {
   setTimeout(() => updateStatus('Ready'), 2000);
 }
 
+// Stealth Mode Management
+function toggleStealthMode() {
+  isStealthMode = !isStealthMode;
+
+  if (isStealthMode) {
+    enableStealthMode();
+  } else {
+    disableStealthMode();
+  }
+
+  updateStealthUI();
+
+  // Add message about stealth mode change
+  const stealthMessage = createMessage('system', '🔧', 'System',
+    `Stealth mode ${isStealthMode ? 'enabled' : 'disabled'}. ${isStealthMode ? 'Window is now hidden from screenshots and screen recordings.' : 'Window is now visible normally.'}`);
+  output.innerHTML += stealthMessage;
+  forceScrollToBottom();
+}
+
+function enableStealthMode() {
+  // Call the main process stealth functions via IPC
+  if (window.api && window.api.enableStealthMode) {
+    window.api.enableStealthMode().then((status) => {
+      isStealthMode = status;
+      updateStealthUI();
+    });
+  } else {
+    isStealthMode = true;
+    updateStealthUI();
+  }
+}
+
+function disableStealthMode() {
+  // Call the main process stealth functions via IPC
+  if (window.api && window.api.disableStealthMode) {
+    window.api.disableStealthMode().then((status) => {
+      isStealthMode = status;
+      updateStealthUI();
+    });
+  } else {
+    isStealthMode = false;
+    updateStealthUI();
+  }
+}
+
+function updateStealthUI() {
+  if (!stealthToggle) return;
+
+  const overlay = document.querySelector('.overlay');
+
+  if (isStealthMode) {
+    stealthToggle.classList.add('active');
+    stealthToggle.querySelector('.stealth-icon').textContent = '🕵️';
+    stealthToggle.title = 'Stealth Mode: ON - Window is hidden from screenshots';
+    updateStatus('Stealth Active', 'var(--secondary-color)');
+    overlay.classList.add('stealth-active');
+
+    // Add stealth indicator to title
+    document.title = '🕵️ Cyrus Assistant Overlay - Stealth Mode';
+  } else {
+    stealthToggle.classList.remove('active');
+    stealthToggle.querySelector('.stealth-icon').textContent = '👁️';
+    stealthToggle.title = 'Stealth Mode: OFF - Window is visible normally';
+    updateStatus('Ready');
+    overlay.classList.remove('stealth-active');
+
+    // Remove stealth indicator from title
+    document.title = 'Cyrus Assistant Overlay';
+  }
+}
+
 // Utility Functions
 function scrollToBottom() {
   // More robust scrolling
@@ -255,5 +336,9 @@ window.CyrusApp = {
   createMessage,
   setLoading,
   scrollToBottom,
-  forceScrollToBottom
+  forceScrollToBottom,
+  toggleStealthMode,
+  enableStealthMode,
+  disableStealthMode,
+  isStealthMode: () => isStealthMode
 };

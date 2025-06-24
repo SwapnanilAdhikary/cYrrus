@@ -6,7 +6,12 @@ contextBridge.exposeInMainWorld('api', {
   // 🔹 Expose stealth screenshot result listener
   receiveStealthResponse: (callback) => {
     ipcRenderer.on('stealth-response', (_, data) => callback(data));
-  }
+  },
+
+  // Stealth mode functions
+  enableStealthMode: () => ipcRenderer.invoke('enable-stealth-mode'),
+  disableStealthMode: () => ipcRenderer.invoke('disable-stealth-mode'),
+  getStealthStatus: () => ipcRenderer.invoke('get-stealth-status')
 });
 
 window.addEventListener('DOMContentLoaded', () => {
