@@ -5,7 +5,11 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron .",
+    "dev": "concurrently \"npm run watch-renderer\" \"npm run watch-main\"",
+    "watch-main": "nodemon --watch src/main.js --watch src/services --watch src/preload.js --exec \"electron .\"",
+    "watch-renderer": "chokidar \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.js\" -c \"echo 'Files changed, reload your Electron app'\"",
+    "dev-simple": "NODE_ENV=development electron .",
+    "build": "electron-builder",
     "bun:install": "bun install",
     "bun:start": "bun run start",
     "bun:dev": "bun run dev",
@@ -22,7 +26,11 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^36.5.0"
+    "electron": "^36.5.0",
+    "nodemon": "^3.0.2",
+    "concurrently": "^8.2.2",
+    "chokidar-cli": "^3.0.0",
+    "electron-reload": "^2.0.0-alpha.1"
   },
   "dependencies": {
     "@google-cloud/vision": "^5.2.0",

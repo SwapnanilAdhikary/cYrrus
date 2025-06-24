@@ -4,7 +4,18 @@ const { app, BrowserWindow, globalShortcut, ipcMain, desktopCapturer } = require
 const path = require('path');
 const { askGemini } = require('./services/gemini');
 const crypto = require('crypto');
-const { exec } = require('child_process')
+
+// Enable live reload for development
+if (process.env.NODE_ENV === 'development') {
+  try {
+    require('electron-reload')(__dirname, {
+      electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
+      hardResetMethod: 'exit'
+    });
+  } catch (e) {
+    console.log('Electron reload not available');
+  }
+}
 
 let lastImageHash = null;
 let win;
@@ -22,18 +33,25 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // Enable dev tools in development
+      devTools: process.env.NODE_ENV === 'development'
     }
   });
 
   win.loadFile('src/index.html');
-  win.setIgnoreMouseEvents(false); // Enable true if you want full stealth click-through
+
+  // Open DevTools in development
+  if (process.env.NODE_ENV === 'development') {
+    win.webContents.openDevTools({ mode: 'detach' });
+  }
+
+  win.setIgnoreMouseEvents(false);
 
   if (process.platform === 'darwin') {
     app.dock.hide()
   }
 
-  win.setContentProtection(true); // trying to exclude during screen share
-
+  win.setContentProtection(true);
 }
 
 const toggleVisibility = () => {
@@ -41,35 +59,21 @@ const toggleVisibility = () => {
   else win.show()
 }
 
-const enableStealthMode = () => {
-  if (process.platform === 'win32') {
-    const pid = process.pid;
-    exec(`Invisiwind.exe --hide ${pid}`, { cwd: path.join(__dirname, 'tools', 'Invisiwind') }, (err) => {
-      if (err) {
-        console.error("Error while enabling stealth mode");
-      } else {
-        console.log("Stealth mode enabled");
-      }
-    });
-  }
-};
 
-const disableStealthMode = () => {
-  if (process.platform === 'win32') {
-    const pid = process.pid;
-    exec(`Invisiwind.exe --unhide ${pid}`, { cwd: path.join(__dirname, 'tools', 'Invisiwind') }, (err) => {
-      if (err) {
-        console.error("Error while disabling the stealth mode");
-      } else {
-        console.log("Disabled stealth mode");
-      }
-    });
-  }
-};
 
 
 app.whenReady().then(() => {
   createWindow();
+
+  // Development hot reload shortcut
+  if (process.env.NODE_ENV === 'development') {
+    globalShortcut.register('Control+R', () => {
+      win.reload();
+    });
+    globalShortcut.register('F12', () => {
+      win.webContents.toggleDevTools();
+    });
+  }
 
   // 🔁 Toggle Overlay visibility
   globalShortcut.register('Control+Shift+O', toggleVisibility);
