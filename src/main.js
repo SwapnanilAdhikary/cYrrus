@@ -4,6 +4,7 @@ const { app, BrowserWindow, globalShortcut, ipcMain, desktopCapturer } = require
 const path = require('path');
 const { askGemini } = require('./services/gemini');
 const crypto = require('crypto');
+const { exec } = require('child_process')
 
 let lastImageHash = null;
 let win;
@@ -26,19 +27,58 @@ function createWindow() {
 
   win.loadFile('src/index.html');
   win.setIgnoreMouseEvents(false); // Enable true if you want full stealth click-through
+
+  if (process.platform === 'darwin') {
+    app.dock.hide()
+  }
+
+  win.setContentProtection(true); // trying to exclude during screen share
+  
+}
+
+const toggleVisibility = () => {
+  if (win.isVisible()) win.hide();
+  else win.show()
+}
+
+const enableStealthMode = () => {
+  if (process.platform === 'win32') {
+    const pid = process.pid
+    const invisiwindPath = path.join(__dirname, 'tools', 'Invisiwind', 'Invisiwind.exe');
+    exec(`Invisiwind.exe --hide ${pid}`, { cwd: __dirname, 'tools', 'Invisiwind' }, (err) => {
+      if (err) {
+        console.error("Error while enabling stealth mode");
+      } else {
+        consolg.log("Stealth mode enabled")
+      }
+    })
+  }
+}
+
+const disableStealthMode = () => {
+  if (process.platform === 'win32'){
+    const pid = process.pid
+    const invisiwindPath = path.join(__dirname, 'tools', 'Invisiwind', 'Invisiwind.exe');
+    exec(`Invisiwind.exe --unhide ${pid}`, { cwd: __dirname, 'tools', 'Invisiwind' }, (err) => {
+      if (err) {
+        console.error("Error while disabling the stealth mode")
+      } else {
+        console.log("Disabled stealth mode")
+      }
+    })
+  }
 }
 
 app.whenReady().then(() => {
   createWindow();
 
   // 🔁 Toggle Overlay visibility
-  globalShortcut.register('Control+Shift+O', () => {
-    if (win.isVisible()) {
-      win.hide();
-    } else {
-      win.show();
-    }
-  });
+  globalShortcut.register('Control+Shift+O', toggleVisibility);
+  globalShortcut.register('Super+Shift+O', toggleVisibility);
+  
+  // Toggle stealth mode 
+  globalShortcut.register('Control+Shift+P', enableStealthMode);
+  globalShortcut.register('Control+Shift+L', disableStealthMode);
 
   // 📸 Capture Screen & Ask Gemini
   globalShortcut.register('Control+Shift+A', async () => {
