@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { app, BrowserWindow, globalShortcut, ipcMain, desktopCapturer } = require('electron');
 const path = require('path');
 const { askGemini } = require('./services/gemini');
@@ -48,23 +50,23 @@ app.whenReady().then(() => {
           height: 1080,
         }
       });
-  
+
       if (!sources.length) return;
-  
+
       const screen = sources[0];
       const imageBuffer = screen.thumbnail.toPNG();
       const base64Image = imageBuffer.toString('base64');
-  
+
       // 🧠 Compute SHA-256 hash to check for duplicate
       const currentHash = crypto.createHash('sha256').update(imageBuffer).digest('hex');
-  
+
       if (currentHash === lastImageHash) {
         console.log("🟡 Duplicate screenshot detected. Skipping Gemini call.");
         return;
       }
-  
+
       lastImageHash = currentHash; // ✅ Save for future comparison
-  
+
       const defaultPrompt = `
 You are a concise coding sidekick. The user is working on a coding problem.
 From the image, identify and respond with:
@@ -78,14 +80,14 @@ From the image, identify and respond with:
 Ignore display glitches unless they block the task.
 `.trim();
 
-  
+
       const response = await askGemini(defaultPrompt, base64Image);
-  
+
       win.webContents.send('stealth-response', {
         prompt: defaultPrompt,
         response: response,
       });
-  
+
       if (!win.isVisible()) win.show();
     } catch (err) {
       console.error("❌ Error during screen capture:", err);

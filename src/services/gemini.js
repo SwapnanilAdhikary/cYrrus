@@ -1,16 +1,17 @@
 const fs = require('fs');
+const path = require('path');
 const fetch = require('node-fetch');
 const { GoogleAuth } = require('google-auth-library');
+const {
+  GEMINI_API_KEY,
+  GCP_PROJECT_ID,
+  GCP_REGION,
+  GCP_MODEL,
+  GCP_CREDENTIALS_PATH
+} = require('./env');
 
 // 🔹 Gemini text-only endpoint (API key-based)
-const GEMINI_API_KEY = 'AIzaSyBn5_Ll3_WuWuadIQsn00fKAYLCe0kTVp4';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${GEMINI_API_KEY}`;
-
-// 🔸 Gemini multimodal (image+text) via GCP Vertex AI
-const GCP_PROJECT_ID = 'key-beacon-463806-s2';
-const GCP_REGION = 'us-central1';
-const GCP_MODEL = 'gemini-2.5-pro';
-const GCP_CREDENTIALS_PATH = 'C://Users//adhik//Desktop//Cluey 2.0//test//credentials_vertex.json';
 
 async function askGemini(prompt, imageBase64 = null) {
   if (!imageBase64) {
@@ -32,14 +33,26 @@ async function askGemini(prompt, imageBase64 = null) {
       });
 
       const data = await response.json();
+
+      if (data.error) {
+        console.error("❌ Gemini API error:", data.error);
+        return `[API Error] ${data.error.message || 'Unknown error'}`;
+      }
+
       return data?.candidates?.[0]?.content?.parts?.[0]?.text || "[Empty response]";
     } catch (err) {
-      console.error("❌ Gemini API error:", err);
+      console.error("❌ Gemini API error:", err.message);
       return "[Gemini failed]";
     }
   } else {
     // 🔸 IMAGE + TEXT MODE (GCP Vertex AI multimodal endpoint)
     try {
+      // Check if credentials file exists
+      if (!fs.existsSync(GCP_CREDENTIALS_PATH)) {
+        console.error(`❌ Credentials file not found: ${GCP_CREDENTIALS_PATH}`);
+        return "[Credentials file missing]";
+      }
+
       const auth = new GoogleAuth({
         keyFile: GCP_CREDENTIALS_PATH,
         scopes: 'https://www.googleapis.com/auth/cloud-platform',
@@ -77,7 +90,6 @@ async function askGemini(prompt, imageBase64 = null) {
       });
 
       const data = await response.json();
-      console.log("🔍 GCP Gemini raw response:", JSON.stringify(data, null, 2));
 
       if (data.error) {
         console.error("❌ Vertex Error:", data.error);
@@ -85,11 +97,9 @@ async function askGemini(prompt, imageBase64 = null) {
       }
 
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      console.log("✅ Extracted Gemini response:", text);
-
       return text || '[Empty Gemini vision response]';
     } catch (err) {
-      console.error("❌ GCP Gemini vision request failed:", err);
+      console.error("❌ GCP Gemini vision request failed:", err.message);
       return "[GCP Vision failed]";
     }
   }
