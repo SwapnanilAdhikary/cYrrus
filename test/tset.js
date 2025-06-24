@@ -1,7 +1,9 @@
 // test-gemini.js (Node 18+ and 20+ compatible)
 
-const GEMINI_API_KEY = 'AIzaSyBn5_Ll3_WuWuadIQsn00fKAYLCe0kTVp4';
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${GEMINI_API_KEY}`;
+// Load environment variables from Cyrus folder
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
 async function askGemini(prompt) {
   try {

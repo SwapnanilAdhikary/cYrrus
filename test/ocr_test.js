@@ -1,9 +1,14 @@
+// Load environment variables from Cyrus folder
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
 const vision = require('@google-cloud/vision');
 const path = require('path');
 
 async function runOCR(imagePath) {
+  const credentialsPath = process.env.OCR_CREDENTIALS_PATH || path.join(__dirname, '../credentials/ocr-credentials.json');
+
   const client = new vision.ImageAnnotatorClient({
-    keyFilename: path.join(__dirname, 'credentials.json')
+    keyFilename: credentialsPath
   });
 
   try {

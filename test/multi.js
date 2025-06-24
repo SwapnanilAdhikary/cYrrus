@@ -1,14 +1,17 @@
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
 const fs = require('fs');
 const fetch = require('node-fetch');
 const { GoogleAuth } = require('google-auth-library');
 
-const PROJECT_ID = 'key-beacon-463806-s2';
-const REGION = 'us-central1';
-const MODEL = 'gemini-2.5-pro';
+const PROJECT_ID = process.env.GCP_PROJECT_ID;
+const REGION = process.env.GCP_REGION || 'us-central1';
+const MODEL = process.env.GCP_MODEL || 'gemini-2.5-pro';
+const CREDENTIALS_PATH = process.env.GCP_CREDENTIALS_PATH || './credentials/vertex-credentials.json';
 
 async function main() {
   const auth = new GoogleAuth({
-    keyFile: 'C:/Users/adhik/Desktop/Cluey 2.0/test/credentials_vertex.json',
+    keyFile: CREDENTIALS_PATH,
     scopes: 'https://www.googleapis.com/auth/cloud-platform',
   });
 
