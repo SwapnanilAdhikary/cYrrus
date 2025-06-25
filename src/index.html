@@ -1,143 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <title>Cluey Assistant Overlay</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: transparent;
-      font-family: 'Segoe UI', sans-serif;
-      user-select: none;
-    }
-
-    .overlay {
-      backdrop-filter: blur(12px) saturate(180%);
-      -webkit-backdrop-filter: blur(12px) saturate(180%);
-      background-color: rgba(30, 30, 30, 0.6);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.125);
-      padding: 20px;
-      color: #fff;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-sizing: border-box;
-    }
-
-    .title-bar {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .response-box {
-      flex: 1;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #e0e0e0;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-    }
-
-    .footer {
-      margin-top: 10px;
-      font-size: 12px;
-      text-align: right;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    .response-box, .footer {
-      -webkit-app-region: no-drag;
-    }
-
-    input, button {
-      -webkit-app-region: no-drag;
-    }
-
-    body {
-      -webkit-app-region: drag;
-    }
-
-    .response-box code {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: monospace;
-      color: #ffeb3b;
-    }
-
-    .response-box pre {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 8px;
-      border-radius: 6px;
-      overflow-x: auto;
-      color: #e0e0e0;
-    }
-  </style>
+  <title>Cyrus Assistant Overlay</title>
+  <link rel="stylesheet" href="styles/main.css">
 </head>
+
 <body>
   <div class="overlay">
-    <div class="title-bar">🧠 Cyrus</div>
-    <div class="response-box" id="output">
-      <div><em>Loading assistant...</em></div>
+    <div class="title-bar">
+      <div class="title-content">
+        <span class="title-icon">🧠</span>
+        <span class="title-text">Cyrus</span>
+      </div>
+      <div class="title-controls">
+        <button class="stealth-toggle" id="stealth-toggle" title="Toggle Stealth Mode">
+          <span class="stealth-icon">👁️</span>
+          <span class="stealth-text">Stealth</span>
+        </button>
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span>Ready</span>
+        </div>
+        </div>
     </div>
-    <div style="margin-top: 10px; display: flex; gap: 8px;">
-      <input id="input" type="text" placeholder="Ask Gemini..." style="flex: 1; padding: 8px; border-radius: 8px; border: none; font-size: 14px;" />
-      <button onclick="handleAsk()" style="padding: 8px 12px; border-radius: 8px; border: none; background: #2196f3; color: white; cursor: pointer;">
-        Ask
-      </button>
+
+    <div class="content-area">
+      <div class="response-box" id="output">
+        <div class="message assistant">
+          <div class="message-header">
+            <span class="message-icon">🤖</span>
+            <span>Assistant</span>
+            <span class="message-time" id="init-time"></span>
+          </div>
+          <div class="message-content">
+            <p>Cyrus is ready to assist you with coding tasks!</p>
+            <p>Press <kbd>Ctrl+Shift+A</kbd> to analyze your current screen or type a question below.</p>
+          </div>
+        </div>
+        </div>
     </div>
+<div class="input-section">
+  <div class="input-container">
+    <input id="input" type="text" placeholder="Ask Cyrus anything..." autocomplete="off" spellcheck="false" />
+    <button class="ask-button" onclick="handleAsk()" id="ask-btn">
+      <span id="ask-text">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m5 12 7-7 7 7" />
+          <path d="m12 19 7-7-7-7" />
+        </svg>
+      </span>
+    </button>
+      </div>
+    </div>
+
     <div class="footer">
-      Press Ctrl+Shift+O to toggle visibility<br />
-      Press Ctrl+Shift+A to analyze current screen
+      <div class="shortcuts">
+        <div class="shortcut">
+          <kbd>⌘ O</kbd>
+          <span>Visibility Toggle</span>
+        </div>
+        <div class="shortcut">
+          <kbd>⌘ A</kbd>
+          <span>Analyze</span>
+        </div>
+      </div>
+      <div class="version">v1.2.X</div>
     </div>
   </div>
 
-  <!-- ✅ Marked.js CDN for Markdown parsing -->
+  <!-- External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script>
-    const output = document.getElementById('output');
 
-    async function handleAsk() {
-      const input = document.getElementById('input');
-      const prompt = input.value.trim();
-
-      if (!prompt) return;
-
-      const userText = `<div><strong>🧍 You:</strong> ${prompt}</div>`;
-      output.innerHTML += userText;
-      input.value = "Thinking...";
-
-      try {
-        const response = await window.api.askGemini(prompt);
-        const html = marked.parse(response);
-        output.innerHTML += `<div><strong>🤖 Gemini:</strong><br>${html}</div>`;
-      } catch (err) {
-        output.innerHTML += `<div><strong>⚠️ Error:</strong> ${err.message}</div>`;
-      } finally {
-        input.value = "";
-        output.scrollTop = output.scrollHeight;
-      }
-    }
-
-    // 🔁 Listen for stealth screen analysis results
-    window.api.receiveStealthResponse(({ prompt, response }) => {
-      const timestamp = new Date().toLocaleTimeString();
-      const html = marked.parse(response);
-      output.innerHTML += `
-        <div><strong>🕒 ${timestamp}</strong></div>
-        <div><strong>📸 Screenshot Analyzed:</strong></div>
-        <div>🤖 Gemini:<br>${html}</div>
-      `;
-      output.scrollTop = output.scrollHeight;
-    });
-  </script>
+  <!-- Application Scripts -->
+  <script src="scripts/main.js"></script>
 </body>
+
 </html>
